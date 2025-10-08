@@ -11,4 +11,4 @@ AI-powered Patient Education System using LangGraph and LangChain.
 
 ## 📚 Em desenvolvimento
 
-Este é um projeto educacional para o curso de LangGraph.
+Este é um projeto educacional para o curso de LangGraph e LangChain.
