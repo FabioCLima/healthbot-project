@@ -9,7 +9,12 @@ from healthbot.settings import ENV_FILE, PROJECT_ROOT, settings
 
 
 def main() -> int:
-    """Testa se as configurações estão corretas."""
+    """Testa se as configurações estão corretas.
+
+    Returns:
+        0 se as configurações estão válidas, 1 caso contrário
+
+    """
     print("=" * 70)
     print("🔍 VERIFICANDO CONFIGURAÇÕES DO HEALTHBOT")
     print("=" * 70)
