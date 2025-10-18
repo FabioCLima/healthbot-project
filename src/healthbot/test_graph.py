@@ -1,13 +1,20 @@
-"""
-Testa o grafo completo do MVP1.
+"""Testa o grafo completo do MVP1.
+
 Execute: python src/healthbot/test_graph.py
 """
+
+import traceback
 
 from healthbot.graph import run_mvp1
 
 
-def main():
-    """Executa o MVP1 completo."""
+def main() -> None:
+    """Executa o MVP1 completo.
+    
+    Raises:
+        ValueError: Se algum campo obrigatório não foi preenchido
+
+    """
     print("\n")
     print("🧪 INICIANDO TESTE DO GRAFO COMPLETO - MVP1")
     print("\n")
@@ -23,13 +30,16 @@ def main():
         print("=" * 70)
         print()
 
-        assert final_state["topic"] != "", "❌ Topic não foi definido"
+        if not final_state["topic"]:
+            raise ValueError("❌ Topic não foi definido")
         print(f"✅ Topic: {final_state['topic']}")
 
-        assert final_state["results"] != "", "❌ Results não foi preenchido"
+        if not final_state["results"]:
+            raise ValueError("❌ Results não foi preenchido")
         print(f"✅ Results: {len(final_state['results'])} caracteres")
 
-        assert final_state["summary"] != "", "❌ Summary não foi gerado"
+        if not final_state["summary"]:
+            raise ValueError("❌ Summary não foi gerado")
         print(f"✅ Summary: {len(final_state['summary'])} caracteres")
 
         print()
@@ -37,13 +47,18 @@ def main():
         print("🎉 TESTE COMPLETO PASSOU!")
         print("=" * 70)
 
+    except ValueError as e:
+        print()
+        print("=" * 70)
+        print("❌ ERRO DE VALIDAÇÃO")
+        print("=" * 70)
+        print(f"Erro: {e}")
     except Exception as e:
         print()
         print("=" * 70)
         print("❌ ERRO NO TESTE")
         print("=" * 70)
         print(f"Erro: {e}")
-        import traceback
         traceback.print_exc()
 
 
