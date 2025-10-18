@@ -68,29 +68,10 @@ Router ┤
 
 ## 📐 Arquitetura Detalhada por MVP
 
-### MVP 0: Hello World do LangGraph
-**Objetivo:** Ver o LangGraph funcionando  
-**Duração:** 1 hora  
-**Status:** ⬜ Não iniciado
-
-```
-Estado: {message: str}
-
-GRAFO:
-[START] → [hello_node] → [END]
-```
-
-**Aprende:**
-- ✅ Criar StateGraph
-- ✅ Adicionar nós
-- ✅ Compilar e executar
-
----
-
-### MVP 1: Sequential Chain (Linear Puro)
+### MVP 1: Sequential Chain (Linear Puro) ✅
 **Objetivo:** Integração Tavily + OpenAI funcionando  
 **Duração:** 3 horas  
-**Status:** ⬜ Não iniciado
+**Status:** ✅ **COMPLETO** (18/10/2025)
 
 ```python
 # Estado
@@ -114,17 +95,29 @@ Estado: {
 [END]
 ```
 
-**Conceitos técnicos:**
+**Conceitos técnicos implementados:**
 - ✅ Estado tipado (TypedDict)
 - ✅ Nós como funções puras
 - ✅ Tool calling (Tavily)
 - ✅ LLM prompting
-- ❌ SEM condicionais
-- ❌ SEM input do usuário
-- ❌ SEM loops
+- ✅ Busca automática de .env
+- ✅ Validação de configurações
 
-**Entregável:**
-- Script que busca info sobre "diabetes" e mostra resumo
+**Arquivos criados:**
+- ✅ `src/healthbot/settings.py` - Configurações com busca automática
+- ✅ `src/healthbot/state.py` - Definição do Estado
+- ✅ `src/healthbot/nodes.py` - Nós do grafo
+- ✅ `src/healthbot/graph.py` - Construção do grafo
+- ✅ Testes para cada componente
+
+**Entregável:** ✅ Script que busca info sobre "diabetes" e mostra resumo profissional
+
+**Resultado real:**
+```
+Topic: diabetes
+Results: 3318 caracteres de fontes confiáveis
+Summary: 1376 caracteres - resumo educacional de qualidade
+```
 
 ---
 
@@ -165,11 +158,10 @@ Estado: {
 ```
 
 **Conceitos técnicos novos:**
-- ✅ `checkpointer` (salvar estado entre execuções)
-- ✅ `.invoke()` com interrupções
-- ✅ `MessagesState` do LangGraph
-- ✅ `thread_id` para sessões
-- ❌ Ainda sem quiz
+- ⬜ `checkpointer` (salvar estado entre execuções)
+- ⬜ `.invoke()` com interrupções
+- ⬜ `MessagesState` do LangGraph
+- ⬜ `thread_id` para sessões
 
 **Entregável:**
 - Bot interativo que pergunta tópico e aguarda confirmação
@@ -212,10 +204,10 @@ Estado: {
 ```
 
 **Conceitos técnicos novos:**
-- ✅ Prompt engineering avançado (gerar quiz estruturado)
-- ✅ Citation/grounding (avaliar com citações)
-- ✅ Structured output do LLM
-- ✅ Comparação semântica de respostas
+- ⬜ Prompt engineering avançado (gerar quiz estruturado)
+- ⬜ Citation/grounding (avaliar com citações)
+- ⬜ Structured output do LLM
+- ⬜ Comparação semântica de respostas
 
 **Entregável:**
 - Fluxo completo: busca → resumo → quiz → avaliação
@@ -253,10 +245,10 @@ Estado: {
 ```
 
 **Conceitos técnicos novos:**
-- ✅ `add_conditional_edges()` (roteamento)
-- ✅ Função de decisão (retorna "continue" ou "end")
-- ✅ Reset seletivo do estado
-- ✅ Grafos cíclicos (não é mais DAG puro)
+- ⬜ `add_conditional_edges()` (roteamento)
+- ⬜ Função de decisão (retorna "continue" ou "end")
+- ⬜ Reset seletivo do estado
+- ⬜ Grafos cíclicos (não é mais DAG puro)
 
 **Entregável:**
 - Sistema completo com loop funcional
@@ -265,37 +257,18 @@ Estado: {
 
 ## 🔧 Stack Técnico por MVP
 
-| MVP | Estado | Nós | Edges | LLM | Tools | Human Input | Checkpoint | Conditional |
-|-----|--------|-----|-------|-----|-------|-------------|------------|-------------|
-| 0   | Mínimo | 1   | Linear | ❌ | ❌ | ❌ | ❌ | ❌ |
-| 1   | Básico | 3-4 | Linear | ✅ | Tavily | ❌ | ❌ | ❌ |
-| 2   | +Messages | 6-7 | Linear | ✅ | Tavily | ✅ | ✅ | ❌ |
-| 3   | +Quiz | 10-11 | Linear | ✅ | Tavily | ✅ | ✅ | ❌ |
-| 4   | +Continue | 12-13 | **Condicional** | ✅ | Tavily | ✅ | ✅ | ✅ |
+| MVP | Estado | Nós | Edges | LLM | Tools | Human Input | Checkpoint | Conditional | Status |
+|-----|--------|-----|-------|-----|-------|-------------|------------|-------------|--------|
+| 1   | Básico | 4 | Linear | ✅ | Tavily | ❌ | ❌ | ❌ | **✅ COMPLETO** |
+| 2   | +Messages | 6-7 | Linear | ✅ | Tavily | ✅ | ✅ | ❌ | ⬜ Próximo |
+| 3   | +Quiz | 10-11 | Linear | ✅ | Tavily | ✅ | ✅ | ❌ | ⬜ Pendente |
+| 4   | +Continue | 12-13 | **Condicional** | ✅ | Tavily | ✅ | ✅ | ✅ | ⬜ Pendente |
 
 ---
 
 ## 🎓 Conhecimentos por MVP
 
-### MVP 0 - Fundamentos
-```python
-from langgraph.graph import StateGraph
-from typing import TypedDict
-
-class State(TypedDict):
-    message: str
-
-def node_function(state: State) -> dict:
-    return {"message": "Hello LangGraph"}
-
-graph = StateGraph(State)
-graph.add_node("hello", node_function)
-graph.set_entry_point("hello")
-graph.set_finish_point("hello")
-app = graph.compile()
-```
-
-### MVP 1 - Tools + LLM
+### MVP 1 - Tools + LLM ✅
 ```python
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_openai import ChatOpenAI
@@ -371,7 +344,7 @@ graph.add_conditional_edges(
 
 ## 📈 Progressão de Código
 
-### MVP 1-2: Funções Puras (Procedural)
+### MVP 1: Funções Puras (Procedural) ✅
 ```python
 def search_tavily(state: State) -> dict:
     """Função pura: recebe estado, retorna dict"""
@@ -383,7 +356,9 @@ def search_tavily(state: State) -> dict:
 
 ---
 
-### MVP 3-4: Classes Leves (OOP)
+### MVP 2-3: Mantém Funções Puras (adiciona interação)
+
+### MVP 4: Opcional - Classes Leves (OOP)
 ```python
 class HealthBotNodes:
     """Organiza nós relacionados"""
@@ -394,35 +369,9 @@ class HealthBotNodes:
     def search(self, state):
         results = self.tavily.invoke(state["topic"])
         return {"results": results}
-    
-    def summarize(self, state):
-        response = self.llm.invoke(state["results"])
-        return {"summary": response.content}
 ```
 
 **Vantagens:** Reutilização, configuração centralizada
-
----
-
-### Refatoração Futura (se houver tempo)
-```python
-# Factory Pattern
-class NodeFactory:
-    @staticmethod
-    def create_search_node(config):
-        ...
-
-# Strategy Pattern
-class QuizStrategy(ABC):
-    @abstractmethod
-    def generate_question(self, summary): ...
-
-# Builder Pattern
-class GraphBuilder:
-    def add_search_flow(self): ...
-    def add_quiz_flow(self): ...
-    def build(self): ...
-```
 
 ---
 
@@ -431,9 +380,9 @@ class GraphBuilder:
 ### Funcionalidades Obrigatórias
 
 - [ ] 1. Perguntar tópico de saúde ao paciente
-- [ ] 2. Buscar no Tavily focando em fontes médicas confiáveis
-- [ ] 3. Resumir resultados em linguagem acessível
-- [ ] 4. Apresentar resumo ao paciente
+- [x] 2. Buscar no Tavily focando em fontes médicas confiáveis
+- [x] 3. Resumir resultados em linguagem acessível
+- [x] 4. Apresentar resumo ao paciente
 - [ ] 5. Solicitar confirmação de prontidão para quiz
 - [ ] 6. Gerar 1 pergunta de quiz baseada no resumo
 - [ ] 7. Apresentar a pergunta do quiz
@@ -445,26 +394,36 @@ class GraphBuilder:
 
 ### Requisitos Técnicos
 
-- [ ] Usar LangGraph para workflow
-- [ ] Usar Tavily Community Tool do LangChain
-- [ ] Estado deve persistir entre nós
+- [x] Usar LangGraph para workflow
+- [x] Usar Tavily Community Tool do LangChain
+- [x] Estado deve persistir entre nós
 - [ ] Reset de estado ao iniciar novo tópico
-- [ ] Código organizado e profissional
+- [x] Código organizado e profissional
+
+**Progresso:** 5/12 funcionalidades (42%) | 4/5 requisitos técnicos (80%)
 
 ---
 
 ## 🎯 Status Atual
 
-**MVP Atual:** ⬜ MVP 0 (não iniciado)
+**MVP Atual:** ✅ **MVP 1 COMPLETO**
 
-**Próximo Passo:** Criar MVP 0 - Hello World do LangGraph
+**Próximo Passo:** Começar MVP 2 - Human-in-the-Loop
 
 **Bloqueadores:** Nenhum
 
+**Conquistas:**
+- ✅ Sprint 1: Configurações com busca automática do .env
+- ✅ Sprint 2: Estado tipado criado
+- ✅ Sprint 3: Nós implementados e testados
+- ✅ Sprint 4: Grafo compilado e funcional
+
 **Notas:** 
 - Ambiente configurado ✅
-- APIs configuradas ✅
+- APIs configuradas e validadas ✅
 - Git configurado ✅
+- MVP1 testado e funcional ✅
+- Resumo gerado com qualidade profissional ✅
 
 ---
 
@@ -474,9 +433,6 @@ class GraphBuilder:
 - [Tavily Search API](https://docs.tavily.com/)
 - [LangChain Expression Language](https://python.langchain.com/docs/expression_language/)
 - [TypedDict Python](https://docs.python.org/3/library/typing.html#typing.TypedDict)
+- [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
 
 ---
-
-**Última atualização:** 17/10/2025  
-**Autor:** Fabio Lima  
-**Tutor:** Claude (Anthropic)
