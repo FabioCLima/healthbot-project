@@ -1,4 +1,4 @@
-# pyproject.toml (versão corrigida)
+# pyproject.toml 
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -20,6 +20,7 @@ dependencies = [
   "langchain-community>=0.2.16,<0.3",
   "python-dotenv>=1.0.1,<2",
   "pydantic>=2.7",
+  "pydantic-settings>=2.0.0",
   "httpx",
   "tenacity"
 ]
