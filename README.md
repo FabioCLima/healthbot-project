@@ -1,212 +1,364 @@
-# 🏥 HealthBot Project
+# 🏥 HealthBot - AI-Powered Patient Education System
 
-AI-powered Patient Education System using LangGraph and LangChain
+An intelligent health education chatbot powered by **LangGraph**, **LangChain**, **OpenAI**, and **Tavily** that helps patients understand medical conditions through interactive learning and comprehension quizzes.
 
-Mostrar Imagem
-Mostrar Imagem
-Mostrar Imagem
+<div align="center">
 
-📋 Sobre o Projeto
-O HealthBot é um sistema de educação para pacientes que utiliza Inteligência Artificial para:
+![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
+![LangChain](https://img.shields.io/badge/LangChain-0.2+-green.svg)
+![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-orange.svg)
+![License](https://img.shields.io/badge/License-Educational-yellow.svg)
 
-🔍 Buscar informações médicas confiáveis na internet
-📄 Resumir conteúdo em linguagem acessível
-📝 Criar quizzes para validar compreensão
-🎯 Avaliar respostas com feedback educacional
-Tecnologias:
+</div>
 
-LangGraph - Orquestração de workflows com IA
-LangChain - Framework para aplicações com LLMs
-OpenAI GPT-4o-mini - Geração de resumos e avaliações
-Tavily - Busca inteligente focada em fontes confiáveis
-🚀 Quick Start
-Pré-requisitos
-Python 3.13+
-API Keys: OpenAI e Tavily
-Instalação
+---
+
+## 📋 About the Project
+
+HealthBot is an AI-powered educational system designed to improve patient understanding of medical conditions and health topics. It provides:
+
+🔍 **Intelligent Search** - Retrieves reliable medical information from trusted sources using Tavily  
+📄 **Smart Summarization** - Converts complex medical content into patient-friendly language  
+📝 **Interactive Quizzes** - Tests comprehension with auto-generated questions  
+🎯 **Instant Feedback** - Provides detailed evaluations with educational citations  
+🔄 **Continuous Learning** - Allows exploring multiple topics in one session
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.13+
+- OpenAI API key
+- Tavily API key (for medical information search)
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
 cd healthbot-project
+```
 
-## Crie e ative o ambiente virtual
-
+2. **Create and activate virtual environment**
+```bash
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
 
-## ou
+# On Linux/Mac
+source .venv/bin/activate
 
-.venv\Scripts\activate     # Windows
+# On Windows
+.venv\Scripts\activate
+```
 
-## Instale as dependências
-
+3. **Install dependencies**
+```bash
 pip install -e .
-Configuração
-Crie um arquivo .env na raiz do projeto:
-TAVILY_API_KEY=tvly-...
+```
 
-## LangSmith (opcional - para debug)
+4. **Configure environment variables**
+```bash
+# Copy the example file
+cp .env.example .env
 
+# Edit .env and add your API keys
+nano .env  # or use your preferred editor
+```
+
+Required keys in `.env`:
+```bash
+OPENAI_API_KEY=sk-proj-your-key-here
+TAVILY_API_KEY=tvly-dev-your-key-here
+
+# Optional: LangSmith for debugging
 LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=lsv2_pt_...
-LANGCHAIN_PROJECT=HealthBot Prototype
-Teste a configuração
-bash
-python src/healthbot/test_configurations.py
-Execute o MVP1
-bash
-python src/healthbot/test_graph.py
-📊 Status do Desenvolvimento
-MVP 1: Sequential Chain ✅ COMPLETO
-Fluxo linear básico com busca e resumo
+LANGCHAIN_API_KEY=lsv2_pt_your-key-here
+LANGCHAIN_PROJECT=HealthBot
+```
 
-[START] → [set_topic] → [search_tavily] → [summarize] → [print_summary] → [END]
-Features implementadas:
+5. **Run HealthBot**
+```bash
+python -m healthbot.main
+```
 
-✅ Busca automática de informações médicas no Tavily
-✅ Resumo em linguagem acessível com OpenAI
-✅ Estado tipado (TypedDict)
-✅ Configurações com busca automática do .env
-✅ Testes unitários para cada componente
-Exemplo de saída:
+---
 
-Topic: diabetes
-Results: 3318 caracteres de 3 fontes confiáveis
-Summary: 1376 caracteres - resumo educacional profissional
-MVP 2: Human-in-the-Loop ⬜ PRÓXIMO
-Adicionar interação com usuário
+## 💻 Usage
 
-⬜ Perguntar tópico ao usuário
-⬜ Aguardar confirmação antes de continuar
-⬜ Sistema de mensagens (chat)
-⬜ Checkpointer para persistência
-MVP 3: Sistema de Quiz ⬜ PENDENTE
-Geração e avaliação de quiz
+### Interactive Mode (Recommended)
 
-⬜ Gerar pergunta baseada no resumo
-⬜ Receber resposta do paciente
-⬜ Avaliar com nota e feedback
-⬜ Citações do resumo na avaliação
-MVP 4: Loop e Decisões ⬜ PENDENTE
-Fluxo completo com repetição
+Simply run the main application:
 
-⬜ Perguntar se quer novo tópico
-⬜ Conditional routing
-⬜ Reset de estado
-⬜ Finalização
-Progresso geral: 25% (1/4 MVPs)
+```bash
+python -m healthbot.main
+```
 
-🏗️ Arquitetura
-Estrutura do Projeto
+or
+
+```bash
+python src/healthbot/main.py
+```
+
+### Example Session
+
+```
+======================================================================
+  🏥 HEALTHBOT - AI-Powered Patient Education System
+======================================================================
+  Version: 1.0.0 (MVP4 Complete)
+  Powered by: LangGraph + LangChain + OpenAI + Tavily
+======================================================================
+
+🔧 Validating configuration...
+✅ Configuration valid!
+
+======================================================================
+  STARTING INTERACTIVE SESSION
+======================================================================
+
+🚀 Starting conversation...
+
+🤖 HealthBot:
+
+Hello! I'm HealthBot, your health education assistant. 🏥
+
+I'm here to help you better understand medical conditions and health care.
+
+What health topic would you like to learn about today?
+(Examples: diabetes, hypertension, asthma, anxiety)
+
+👤 Enter a health topic you'd like to learn about:
+   > diabetes
+
+[Bot searches, summarizes, and presents educational content]
+
+👤 Enter your answer (A, B, C, or D):
+   > B
+
+[Bot evaluates and provides feedback]
+
+👤 Would you like to learn about another topic? (yes/no):
+   > yes
+
+[Loop continues or session ends]
+```
+
+---
+
+## 🏗️ Architecture
+
+### Project Structure
+
+```
 healthbot-project/
-├── .env                        # Variáveis de ambiente (não commitar!)
-├── pyproject.toml              # Configuração do projeto
-├── README.md                   # Este arquivo
-├── mvp_architecture_doc_health_bot.md  # Documentação técnica detalhada
+├── .env                    # Environment variables (DO NOT COMMIT!)
+├── .env.example            # Example environment file
+├── .gitignore              # Git ignore rules
+├── pyproject.toml          # Project configuration
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
 │
-├── src/
-│   └── healthbot/
-│       ├── __init__.py
-│       ├── settings.py         # Configurações e validação de API keys
-│       ├── state.py            # Definição do Estado (TypedDict)
-│       ├── nodes.py            # Nós do grafo (funções)
-│       ├── graph.py            # Construção do grafo LangGraph
-│       ├── main.py             # Ponto de entrada (futuro)
-│       │
-│       └── [testes]
-│           ├── test_configurations.py
-│           ├── test_state.py
-│           ├── test_nodes_simple.py
-│           └── test_graph.py
-│
-└── tests/                      # Testes com pytest (futuro)
-    └── __init__.py
-Padrões de Design
-Sequential Chain Pattern - Fluxo linear de transformações
-Human-in-the-Loop Pattern - Pausas para input do usuário
-Conditional Router Pattern - Decisões que alteram o fluxo
-Stateful Workflow Pattern - Estado compartilhado entre nós
+└── src/
+    └── healthbot/
+        ├── __init__.py     # Package initialization
+        ├── main.py         # Main application entry point
+        ├── settings.py     # Configuration and API key validation
+        ├── state.py        # Graph state definition (TypedDict)
+        └── graph.py        # LangGraph workflow and nodes
+```
 
-## 🧪 Testes
+### Conversation Flow
 
-### Teste do estado
+```mermaid
+graph TD
+    A[Start] --> B[Ask Topic]
+    B --> C[Receive Topic]
+    C --> D[Search Tavily]
+    D --> E[Summarize Results]
+    E --> F[Present Summary]
+    F --> G[Create Quiz]
+    G --> H[Present Quiz]
+    H --> I[Receive Answer]
+    I --> J[Grade Answer]
+    J --> K[Present Grade]
+    K --> L[Ask Continue?]
+    L -->|Yes| B
+    L -->|No| M[End]
+```
 
-python src/healthbot/test_state.py
+### Key Components
 
-### Teste dos nós
+#### 1. **State Management** (`state.py`)
+- TypedDict-based state for type safety
+- Tracks conversation history, topic, search results, quiz data
+- Automatic message accumulation with LangGraph
 
-python src/healthbot/test_nodes_simple.py
+#### 2. **Configuration** (`settings.py`)
+- Pydantic-based settings validation
+- Automatic `.env` file loading
+- API key validation and environment setup
 
-### Teste do grafo completo (MVP1)
+#### 3. **Workflow Orchestration** (`graph.py`)
+- **12 specialized nodes**:
+  - `ask_topic` - Initiates conversation
+  - `receive_topic` - Captures user's topic
+  - `search_tavily` - Searches medical information
+  - `summarize` - Creates patient-friendly summary
+  - `present_summary` - Displays educational content
+  - `create_quiz` - Generates comprehension question
+  - `present_quiz` - Shows quiz to user
+  - `receive_answer` - Captures quiz response
+  - `grade_answer` - Evaluates with LLM
+  - `present_grade` - Shows evaluation results
+  - `ask_continue` - Prompts for continuation
+  - `receive_continue` - Handles loop decision
 
-python src/healthbot/test_graph.py
-📚 Documentação
-Para documentação técnica detalhada, incluindo:
+- **Human-in-the-loop**: Pauses for user input at strategic points
+- **Conditional routing**: Decides between new topic or session end
+- **State persistence**: Uses MemorySaver for conversation continuity
 
-Análise de padrões de design
-Arquitetura de cada MVP
-Exemplos de código
-Conceitos de LangGraph
-Consulte: mvp_architecture_doc_health_bot.md
+#### 4. **Main Application** (`main.py`)
+- Interactive console interface
+- Input validation and error handling
+- Session management
+- User-friendly message formatting
 
-🛠️ Desenvolvimento
-Tecnologias Utilizadas
-Biblioteca	Versão	Propósito
-langchain	0.2.16+	Framework para LLMs
-langchain-openai	0.1.23+	Integração OpenAI
-langgraph	0.2.19+	Orquestração de workflows
-tavily-python	0.4.0+	Busca inteligente
-pydantic	2.7+	Validação de dados
-python-dotenv	1.0.1+	Gerenciamento de .env
-Linting e Formatação
-bash
-# Verificar código
-ruff check .
+---
 
-# Formatar código
+## 🛠️ Technologies Used
 
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| **Python** | 3.13+ | Core programming language |
+| **LangChain** | 0.2.16+ | LLM framework and integrations |
+| **LangGraph** | 0.2.19+ | Stateful workflow orchestration |
+| **OpenAI** | via langchain-openai | GPT-4o-mini for summarization and quizzes |
+| **Tavily** | 0.4.0+ | Medical information search engine |
+| **Pydantic** | 2.7+ | Data validation and settings |
+| **python-dotenv** | 1.0.1+ | Environment variable management |
+
+---
+
+## 🎯 Features
+
+### ✅ Implemented
+
+- [x] Interactive health topic selection
+- [x] Intelligent search using Tavily (medical sources focus)
+- [x] LLM-powered summarization in accessible language
+- [x] Automatic quiz generation based on content
+- [x] AI-powered answer evaluation with scoring
+- [x] Educational feedback with summary citations
+- [x] Continuous learning loop (multiple topics per session)
+- [x] Human-in-the-loop for user control
+- [x] Stateful conversation with persistence
+- [x] Graceful error handling
+
+### 🎓 Educational Goals
+
+1. **Improve patient understanding** of medical conditions
+2. **Provide 24/7 access** to reliable health information
+3. **Reduce workload** on healthcare providers
+4. **Increase patient engagement** in their healthcare
+5. **Support better treatment adherence** through education
+
+---
+
+## 🧪 Testing
+
+The application includes comprehensive validation:
+
+```bash
+# Validate configuration
+python -c "from healthbot.settings import settings; print(settings.validate_required_keys())"
+
+# Test complete flow
+python -m healthbot.main
+```
+
+---
+
+## 📦 Development
+
+### Code Quality Tools
+
+```bash
+# Format code
 ruff format .
 
-## Corrigir automaticamente
+# Check linting
+ruff check .
 
+# Auto-fix issues
 ruff check . --fix
-🎯 Roadmap
- Sprint 1: Configurações e validação de API keys
- Sprint 2: Estado tipado (TypedDict)
- Sprint 3: Nós do grafo (funções puras)
- Sprint 4: Grafo compilado e funcional (MVP1)
- Sprint 5: Interação com usuário (MVP2)
- Sprint 6: Sistema de quiz (MVP3)
- Sprint 7: Loop condicional (MVP4)
- Sprint 8: Testes e refinamentos
- Sprint 9: Documentação final
- Sprint 10: Submissão
-Deadline: 29/10/2025
 
-📝 Requisitos do Projeto
-Funcionalidades Obrigatórias
- Perguntar tópico de saúde ao paciente
- Buscar no Tavily focando em fontes médicas confiáveis
- Resumir resultados em linguagem acessível
- Apresentar resumo ao paciente
- Solicitar confirmação de prontidão para quiz
- Gerar 1 pergunta de quiz baseada no resumo
- Apresentar a pergunta do quiz
- Receber resposta do paciente
- Avaliar resposta com nota + justificativa + citações
- Apresentar avaliação ao paciente
- Perguntar se quer novo tópico ou sair
- Loop (resetar estado) ou finalizar
-Progresso: 4/12 (33%)
+# Type checking (if using pyright)
+pyright
+```
 
-👤 Autor
-Fabio Lima
+### Project Configuration
 
-Email: lima.fisico@gmail.com
-GitHub: @FabioCLima
-📄 Licença
-Este é um projeto educacional desenvolvido como parte do curso de LangGraph e LangChain.
+See `pyproject.toml` for:
+- Dependency management
+- Ruff linting rules
+- Code formatting standards
+- Type checking configuration
 
-🙏 Agradecimentos
-Udacity - Curso de LangGraph/LangChain
-LangChain - Framework e documentação
-OpenAI - Modelos GPT
-Tavily - API de busca
-Última atualização: 18/10/2025 - MVP1 Completo ✅
+---
+
+## 🔒 Security Notes
+
+- ⚠️ **Never commit `.env` file** to version control
+- ✅ Use `.env.example` for sharing configuration templates
+- 🔑 Keep API keys secure and rotate them regularly
+- 📝 `.gitignore` is configured to exclude sensitive files
+
+---
+
+## 📄 License
+
+This is an educational project developed as part of the Udacity LangGraph/LangChain course.
+
+---
+
+## 👤 Author
+
+**Fabio Lima**  
+📧 Email: lima.fisico@gmail.com  
+🐙 GitHub: [@FabioCLima](https://github.com/FabioCLima)
+
+---
+
+## 🙏 Acknowledgments
+
+- **Udacity** - LangGraph/LangChain course
+- **LangChain** - Framework and excellent documentation
+- **OpenAI** - GPT models for intelligent content generation
+- **Tavily** - Reliable medical information search
+- **Anthropic** - Claude for development assistance
+
+---
+
+## 📞 Support
+
+If you encounter any issues:
+
+1. Check that all API keys are correctly configured in `.env`
+2. Verify Python version is 3.13+
+3. Ensure all dependencies are installed: `pip install -e .`
+4. Review error messages for configuration problems
+
+For questions about LangGraph/LangChain concepts, refer to:
+- [LangChain Documentation](https://python.langchain.com/)
+- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
+
+---
+
+<div align="center">
+
+**Built with ❤️ for better patient education**
+
+Last Updated: October 2025
+
+</div>

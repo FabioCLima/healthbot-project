@@ -1,6 +1,11 @@
-"""Grafo do HealthBot - MVP2.
+"""HealthBot Graph Construction.
 
-Define a estrutura do workflow interativo com Human-in-the-Loop.
+This module is responsible for creating and configuring the LangGraph
+workflow that orchestrates the HealthBot conversation flow.
+
+The graph manages a stateful conversation with human-in-the-loop
+interactions, allowing users to learn about health topics through
+an interactive educational experience.
 """
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -8,110 +13,142 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from healthbot.nodes import (
+    ask_continue,
     ask_topic,
+    create_quiz,
+    grade_answer,
+    present_grade,
+    present_quiz,
     present_summary,
+    receive_answer,
+    receive_continue,
     receive_topic,
     search_tavily,
+    should_continue,
     summarize,
-    wait_for_ready,
 )
 from healthbot.state import HealthBotState
 
 
-class GraphNodes:
-    """Constantes para os nós do grafo MVP2."""
+def create_healthbot_graph() -> CompiledStateGraph:
+    """Creates and compiles the HealthBot conversation graph.
 
-    ASK_TOPIC = "ask_topic"
-    RECEIVE_TOPIC = "receive_topic"
-    SEARCH_TAVILY = "search_tavily"
-    SUMMARIZE = "summarize"
-    PRESENT_SUMMARY = "present_summary"
-    WAIT_FOR_READY = "wait_for_ready"
+    Builds a stateful graph that manages the complete educational flow
+    with continuation loop:
+    
+    1. Ask for health topic
+    2. Search for information with Tavily
+    3. Generate educational summary
+    4. Create and present quiz
+    5. Evaluate user's answer
+    6. Present results
+    7. Ask if user wants to continue
+    8. Either restart for new topic or end session
 
-
-def create_graph() -> CompiledStateGraph:
-    """Cria e compila o grafo do MVP2 com Human-in-the-Loop.
-
-    Fluxo:
-        START → ask_topic → [INTERRUPT] → receive_topic → search_tavily
-        → summarize → present_summary → [INTERRUPT] → wait_ready → END
-
-    Os pontos de [INTERRUPT] pausam a execução para aguardar input do usuário.
+    The graph includes strategic interrupts to wait for user input at:
+    - Topic selection (after ask_topic)
+    - Quiz answer (after present_quiz)
+    - Continuation decision (after ask_continue)
 
     Returns:
-        Grafo compilado com checkpointer e interrupções configuradas
+        Compiled StateGraph with checkpointer for state persistence.
 
+    Example:
+        ```python
+        app = create_healthbot_graph()
+        config = {"configurable": {"thread_id": "session-123"}}
+
+        # Start conversation
+        result = app.invoke({"messages": []}, config)
+
+        # Continue with user input
+        app.update_state(config, {"messages": [HumanMessage(content="diabetes")]})
+        result = app.invoke(None, config)
+
+        # Answer quiz
+        app.update_state(config, {"messages": [HumanMessage(content="B")]})
+        result = app.invoke(None, config)
+
+        # Continue or end
+        app.update_state(config, {"messages": [HumanMessage(content="yes")]})
+        result = app.invoke(None, config)  # Loops back to ask_topic
+        ```
+
+    Note:
+        The graph uses MemorySaver for state persistence, enabling
+        conversation continuation across interrupts.
     """
-    # Cria o grafo com o tipo do estado
+    # ============================================
+    # CREATE THE GRAPH
+    # ============================================
     workflow = StateGraph(HealthBotState)
 
     # ============================================
-    # ADICIONA OS NÓS
+    # ADD ALL NODES
     # ============================================
-    workflow.add_node(GraphNodes.ASK_TOPIC, ask_topic)  # type: ignore[misc]
-    workflow.add_node(GraphNodes.RECEIVE_TOPIC, receive_topic)  # type: ignore[misc]
-    workflow.add_node(GraphNodes.SEARCH_TAVILY, search_tavily)  # type: ignore[misc]
-    workflow.add_node(GraphNodes.SUMMARIZE, summarize)  # type: ignore[misc]
-    workflow.add_node(GraphNodes.PRESENT_SUMMARY, present_summary)  # type: ignore[misc]
-    workflow.add_node(GraphNodes.WAIT_FOR_READY, wait_for_ready)  # type: ignore[misc]
+
+    # Main flow nodes
+    workflow.add_node("ask_topic", ask_topic)  # type: ignore[misc]
+    workflow.add_node("receive_topic", receive_topic)  # type: ignore[misc]
+    workflow.add_node("search_tavily", search_tavily)  # type: ignore[misc]
+    workflow.add_node("summarize", summarize)  # type: ignore[misc]
+    workflow.add_node("present_summary", present_summary)  # type: ignore[misc]
+
+    # Quiz system nodes
+    workflow.add_node("create_quiz", create_quiz)  # type: ignore[misc]
+    workflow.add_node("present_quiz", present_quiz)  # type: ignore[misc]
+    workflow.add_node("receive_answer", receive_answer)  # type: ignore[misc]
+    workflow.add_node("grade_answer", grade_answer)  # type: ignore[misc]
+    workflow.add_node("present_grade", present_grade)  # type: ignore[misc]
+
+    # Continuation loop nodes
+    workflow.add_node("ask_continue", ask_continue)  # type: ignore[misc]
+    workflow.add_node("receive_continue", receive_continue)  # type: ignore[misc]
 
     # ============================================
-    # DEFINE O PONTO DE ENTRADA
+    # DEFINE EDGES (FLOW CONNECTIONS)
     # ============================================
-    workflow.set_entry_point(GraphNodes.ASK_TOPIC)
+
+    # Entry point
+    workflow.set_entry_point("ask_topic")
+
+    # Main learning flow
+    workflow.add_edge("ask_topic", "receive_topic")
+    workflow.add_edge("receive_topic", "search_tavily")
+    workflow.add_edge("search_tavily", "summarize")
+    workflow.add_edge("summarize", "present_summary")
+
+    # Quiz flow
+    workflow.add_edge("present_summary", "create_quiz")
+    workflow.add_edge("create_quiz", "present_quiz")
+    workflow.add_edge("present_quiz", "receive_answer")
+    workflow.add_edge("receive_answer", "grade_answer")
+    workflow.add_edge("grade_answer", "present_grade")
+
+    # Continuation loop
+    workflow.add_edge("present_grade", "ask_continue")
+    workflow.add_edge("ask_continue", "receive_continue")
+
+    # Conditional edge: Continue learning or end session
+    workflow.add_conditional_edges(
+        "receive_continue",
+        should_continue,
+        {
+            "ask_topic": "ask_topic",  # Loop back to start new topic
+            "end": END,  # End the session
+        },
+    )
 
     # ============================================
-    # DEFINE AS CONEXÕES (ARESTAS)
-    # ============================================
-    workflow.add_edge(GraphNodes.ASK_TOPIC, GraphNodes.RECEIVE_TOPIC)
-    workflow.add_edge(GraphNodes.RECEIVE_TOPIC, GraphNodes.SEARCH_TAVILY)
-    workflow.add_edge(GraphNodes.SEARCH_TAVILY, GraphNodes.SUMMARIZE)
-    workflow.add_edge(GraphNodes.SUMMARIZE, GraphNodes.PRESENT_SUMMARY)
-    workflow.add_edge(GraphNodes.PRESENT_SUMMARY, GraphNodes.WAIT_FOR_READY)
-    workflow.add_edge(GraphNodes.WAIT_FOR_READY, END)
-
-    # ============================================
-    # COMPILA O GRAFO COM CHECKPOINTER E INTERRUPTS
+    # COMPILE WITH CHECKPOINTER AND INTERRUPTS
     # ============================================
     checkpointer = MemorySaver()
 
-    return workflow.compile(  # type: ignore[return-value]
+    return workflow.compile(  # type: ignore[misc]
         checkpointer=checkpointer,
-        interrupt_before=[GraphNodes.RECEIVE_TOPIC, GraphNodes.WAIT_FOR_READY],
-    )
-
-
-def run_mvp2_interactive() -> None:
-    """Executa o fluxo interativo do MVP2 com Human-in-the-Loop.
-
-    Esta função demonstra como usar o grafo compilado com checkpoints
-    e interrupções para criar uma experiência conversacional.
-    """
-    print("=" * 70)
-    print("🚀 EXECUTANDO MVP2 - HEALTHBOT INTERATIVO")
-    print("=" * 70)
-    print()
-
-    # Cria o grafo
-    app = create_graph()
-
-    print("💡 Para usar este exemplo de forma completa, você precisaria:")
-    print("1. Executar o grafo em um ambiente que suporte input do usuário")
-    print("2. Capturar as mensagens de interrupção")
-    print("3. Permitir que o usuário forneça input")
-    print("4. Continuar a execução com o input fornecido")
-    print()
-    print("📋 Exemplo de configuração:")
-    print("   thread_config = {'configurable': {'thread_id': 'healthbot-session-1'}}")
-    print(
-        "   initial_state = {'messages': [], 'topic': None, "
-        "'results': None, 'summary': None}"
-    )
-    print()
-    print("Este é o grafo configurado e pronto para execução interativa!")
-    print(f"📊 Nós configurados: {len(app.get_graph().nodes)} nós")
-    print(f"🔗 Conexões: {len(app.get_graph().edges)} arestas")
-    print(
-        f"⚠️  Pontos de interrupção: {GraphNodes.RECEIVE_TOPIC}, "
-        f"{GraphNodes.WAIT_FOR_READY}"
+        interrupt_before=[
+            "receive_topic",  # Pause to receive user's topic
+            "receive_answer",  # Pause to receive quiz answer
+            "receive_continue",  # Pause to receive continuation decision
+        ],
     )
