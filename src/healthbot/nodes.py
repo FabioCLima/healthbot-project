@@ -123,6 +123,14 @@ def search_tavily(state: HealthBotState) -> dict[str, Any]:
     tavily = get_tavily()
     results = tavily.invoke({"query": query})  # type: ignore[misc]
 
+    # Check if we got results
+    if not results or len(results) == 0:
+        print("⚠️  Warning: No results found from Tavily")
+        return {
+            "results": "No reliable information found for this topic. Please try a different or more specific health topic.",
+            "has_results": False
+        }
+
     # Format the results
     formatted_results = ""
     for i, result in enumerate(results, 1):
@@ -132,7 +140,45 @@ def search_tavily(state: HealthBotState) -> dict[str, Any]:
 
     print(f"✅ Found {len(results)} sources")
 
-    return {"results": formatted_results}
+    return {
+        "results": formatted_results,
+        "has_results": True,
+        "sources_count": len(results)
+    }
+
+
+def handle_no_results(state: HealthBotState) -> dict[str, Any]:
+    """Node 4a: Handles cases where no search results were found.
+    
+    Provides a helpful message when Tavily doesn't return any results
+    and suggests alternative approaches.
+    
+    Args:
+        state: Current state (requires 'topic' field).
+        
+    Returns:
+        Dictionary containing a helpful message for the user.
+    """
+    topic = state["topic"]
+    
+    print(f"⚠️  Handling no results for topic: {topic}")
+    
+    message = AIMessage(
+        content=(
+            f"I couldn't find reliable medical information about **{topic}**. 😔\n\n"
+            "This might be because:\n"
+            "• The topic name is too specific or uncommon\n"
+            "• There might be a typo in the topic name\n"
+            "• The topic might need to be more general\n\n"
+            "**Suggestions:**\n"
+            "• Try a more general term (e.g., 'diabetes' instead of 'diabetes type 1 management in elderly patients')\n"
+            "• Check for spelling errors\n"
+            "• Try related health topics\n\n"
+            "Would you like to try a different health topic? 🤔"
+        )
+    )
+    
+    return {"messages": [message]}
 
 
 def summarize(state: HealthBotState) -> dict[str, Any]:
@@ -164,9 +210,13 @@ def summarize(state: HealthBotState) -> dict[str, Any]:
             "medical information in clear and accessible language for patients.\n\n"
             "Create an educational summary that:\n"
             "- Uses simple language (avoid medical jargon)\n"
-            "- Is accurate and based on the sources\n"
+            "- Is accurate and based ONLY on the provided sources\n"
             "- Is between 200-250 words\n"
-            "- Is informative and practical"
+            "- Is informative and practical\n\n"
+            "CRITICAL INSTRUCTION:\n"
+            "- Use ONLY the provided results; do NOT use outside knowledge\n"
+            "- Base your summary exclusively on the sources given\n"
+            "- Do not add information not present in the provided sources"
         )
     )
 
@@ -261,7 +311,9 @@ def create_quiz(state: HealthBotState) -> dict[str, Any]:
             "- Has 4 alternatives (A, B, C, D)\n"
             "- Has only ONE correct answer\n"
             "- Is moderate difficulty\n\n"
-            "CRITICAL INSTRUCTION:\n"
+            "CRITICAL INSTRUCTIONS:\n"
+            "- Use ONLY the provided summary; do NOT use outside knowledge\n"
+            "- Base the question and all alternatives exclusively on the summary\n"
             "- DO NOT reveal which answer is correct in your response\n"
             "- DO NOT include phrases like 'Correct Answer:', 'The answer is', etc.\n"
             "- ONLY provide the question and the four alternatives\n\n"
@@ -333,7 +385,7 @@ def receive_answer(state: HealthBotState) -> dict[str, Any]:
     """Node 8: Receives and processes the user's quiz answer.
 
     Extracts the user's answer from the last message and normalizes
-    it for evaluation.
+    it for evaluation. Handles various input formats (A, a, 1, "option A", etc.).
 
     Args:
         state: Current state (should have user's answer in the last message).
@@ -345,16 +397,56 @@ def receive_answer(state: HealthBotState) -> dict[str, Any]:
     last_message = state["messages"][-1]
 
     if isinstance(last_message, HumanMessage):
-        # Extract the answer
-        answer = extract_message_content(last_message).strip().upper()
+        # Extract and normalize the answer
+        raw_answer = extract_message_content(last_message).strip()
+        normalized_answer = _normalize_quiz_answer(raw_answer)
 
-        print(f"✅ Answer received: {answer}")
+        print(f"✅ Answer received: {raw_answer} → normalized to: {normalized_answer}")
 
-        return {"quiz_answer": answer}
+        return {"quiz_answer": normalized_answer}
 
     # Fallback
     print("⚠️  Warning: Message is not HumanMessage type")
     return {"quiz_answer": ""}
+
+
+def _normalize_quiz_answer(raw_answer: str) -> str:
+    """Normalize user input to standard quiz answer format.
+    
+    Converts various input formats to standard A, B, C, D format.
+    
+    Args:
+        raw_answer: Raw user input
+        
+    Returns:
+        Normalized answer (A, B, C, or D)
+    """
+    # Convert to uppercase and strip whitespace
+    answer = raw_answer.upper().strip()
+    
+    # Handle various formats
+    if answer in ["A", "1"]:
+        return "A"
+    elif answer in ["B", "2"]:
+        return "B"
+    elif answer in ["C", "3"]:
+        return "C"
+    elif answer in ["D", "4"]:
+        return "D"
+    elif "OPTION A" in answer or "ALTERNATIVE A" in answer:
+        return "A"
+    elif "OPTION B" in answer or "ALTERNATIVE B" in answer:
+        return "B"
+    elif "OPTION C" in answer or "ALTERNATIVE C" in answer:
+        return "C"
+    elif "OPTION D" in answer or "ALTERNATIVE D" in answer:
+        return "D"
+    else:
+        # Default to the first character if it's a valid option
+        if len(answer) > 0 and answer[0] in ["A", "B", "C", "D"]:
+            return answer[0]
+        # Fallback to empty string if no valid answer found
+        return ""
 
 
 def grade_answer(state: HealthBotState) -> dict[str, Any]:
@@ -391,6 +483,10 @@ def grade_answer(state: HealthBotState) -> dict[str, Any]:
         content=(
             "You are an educational evaluator specialist.\n\n"
             "Your task is to evaluate the student's answer and provide educational feedback.\n\n"
+            "CRITICAL INSTRUCTION:\n"
+            "- Use ONLY the educational summary provided; do NOT use outside knowledge\n"
+            "- Base your evaluation exclusively on the summary content\n"
+            "- Do not reference information not present in the provided summary\n\n"
             "Analyze if the answer is correct based on the educational summary provided.\n\n"
             "Return the evaluation in the FOLLOWING JSON FORMAT:\n"
             "{\n"
@@ -398,7 +494,13 @@ def grade_answer(state: HealthBotState) -> dict[str, Any]:
             '  "feedback": "[detailed explanation if correct or incorrect and why]",\n'
             '  "citations": ["excerpt 1 from summary that justifies", "excerpt 2..."]\n'
             "}\n\n"
-            "IMPORTANT:\n"
+            "EXAMPLE OUTPUT:\n"
+            "{\n"
+            '  "score": 8,\n'
+            '  "feedback": "Correct! Your answer demonstrates understanding of the key concept mentioned in the summary.",\n'
+            '  "citations": ["The summary states that...", "According to the information provided..."]\n'
+            "}\n\n"
+            "SCORING:\n"
             "- If answer is correct: score 8-10\n"
             "- If partially correct: score 5-7\n"
             "- If incorrect: score 0-4\n"

@@ -14,8 +14,14 @@ Usage:
     or
     
     python src/healthbot/main.py
+    
+    For debug mode:
+    python -m healthbot.main --debug
+    python -m healthbot.main --debug --topic "diabetes"
 """
 
+import argparse
+import sys
 from typing import cast
 
 from langchain_core.messages import BaseMessage, HumanMessage
@@ -67,7 +73,23 @@ def validate_configuration() -> bool:
         print("   See .env.example for reference.\n")
         return False
     
-    print("✅ Configuration valid!\n")
+    print("✅ Configuration valid!")
+    
+    # Display configuration info (without exposing keys)
+    print(f"📋 Model: {settings.openai_model}")
+    print(f"🌡️  Temperature: {getattr(settings, 'openai_temperature', 'default')}")
+    print(f"🔍 Search Engine: Tavily (Advanced)")
+    
+    # Check which keys are detected (masked)
+    detected_keys = []
+    if hasattr(settings, 'openai_api_key') and settings.openai_api_key:
+        detected_keys.append("OPENAI_API_KEY")
+    if hasattr(settings, 'tavily_api_key') and settings.tavily_api_key:
+        detected_keys.append("TAVILY_API_KEY")
+    
+    print(f"🔑 API Keys detected: {', '.join(detected_keys)}")
+    print()
+    
     return True
 
 
@@ -126,14 +148,20 @@ def run_interactive_session() -> None:
     # Create a unique thread ID for this session
     import uuid
     thread_id = f"session-{uuid.uuid4().hex[:8]}"
+    run_id = f"run-{uuid.uuid4().hex[:8]}"
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     
-    print(f"📝 Session ID: {thread_id}\n")
+    print(f"📝 Session ID: {thread_id}")
+    print(f"🆔 Run ID: {run_id}\n")
     print_separator()
     
     # Start the conversation with empty state
     print("🚀 Starting conversation...\n")
-    result = app.invoke({"messages": []}, config)
+    initial_state = {
+        "messages": [],
+        "run_id": run_id
+    }
+    result = app.invoke(initial_state, config)
     
     # Display initial message
     if result.get("messages"):
@@ -220,31 +248,115 @@ def run_interactive_session() -> None:
             display_messages(cast(list[BaseMessage], result["messages"]))
 
 
+def run_debug_mode(topic: str = None, simulate: bool = False) -> None:
+    """Run HealthBot in debug mode with streaming visualization.
+    
+    Args:
+        topic: Optional topic to test with. If not provided, uses "diabetes"
+        simulate: If True, run complete simulation instead of streaming
+    """
+    from healthbot.debug import stream_debug_session, debug_graph_structure, simulate_complete_session
+    
+    print_banner()
+    print("🔍 DEBUG MODE ENABLED")
+    print("=" * 70)
+    
+    # Validate configuration
+    if not validate_configuration():
+        return
+    
+    # Use provided topic or default
+    test_topic = topic or "diabetes"
+    
+    try:
+        # Show graph structure
+        debug_graph_structure()
+        
+        if simulate:
+            # Run complete simulation
+            simulate_complete_session(test_topic)
+        else:
+            # Run streaming debug session
+            stream_debug_session(test_topic, max_steps=20)
+        
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Debug session interrupted by user.")
+        print("👋 Goodbye!\n")
+        
+    except Exception as e:
+        print(f"\n\n❌ An error occurred during debug: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments.
+    
+    Returns:
+        Parsed arguments namespace
+    """
+    parser = argparse.ArgumentParser(
+        description="HealthBot - AI-Powered Patient Education System",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python -m healthbot.main                    # Interactive mode
+  python -m healthbot.main --debug            # Debug mode with default topic
+  python -m healthbot.main --debug --topic "hypertension"  # Debug with specific topic
+        """
+    )
+    
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Run in debug mode with streaming visualization"
+    )
+    
+    parser.add_argument(
+        "--topic",
+        type=str,
+        help="Topic to use in debug mode (only used with --debug)"
+    )
+    
+    parser.add_argument(
+        "--simulate",
+        action="store_true",
+        help="Run complete simulation in debug mode (only used with --debug)"
+    )
+    
+    return parser.parse_args()
+
+
 def main() -> None:
     """Main entry point for the HealthBot application.
     
     Validates configuration, displays welcome banner, and starts
-    the interactive session.
+    either interactive or debug session based on arguments.
     """
-    print_banner()
+    args = parse_arguments()
     
-    # Validate configuration before starting
-    if not validate_configuration():
-        return
-    
-    try:
-        # Run the interactive session
-        run_interactive_session()
+    if args.debug:
+        run_debug_mode(args.topic, args.simulate)
+    else:
+        print_banner()
         
-    except KeyboardInterrupt:
-        print("\n\n⚠️  Session interrupted by user.")
-        print("👋 Goodbye!\n")
+        # Validate configuration before starting
+        if not validate_configuration():
+            return
         
-    except Exception as e:
-        print(f"\n\n❌ An error occurred: {e}")
-        print("Please check your configuration and try again.\n")
-        import traceback
-        traceback.print_exc()
+        try:
+            # Run the interactive session
+            run_interactive_session()
+            
+        except KeyboardInterrupt:
+            print("\n\n⚠️  Session interrupted by user.")
+            print("👋 Goodbye!\n")
+            
+        except Exception as e:
+            print(f"\n\n❌ An error occurred: {e}")
+            print("Please check your configuration and try again.\n")
+            import traceback
+            traceback.print_exc()
 
 
 if __name__ == "__main__":
