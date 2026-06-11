@@ -332,11 +332,9 @@ This is an educational project developed as part of the Udacity LangGraph/LangCh
 
 ## 🙏 Acknowledgments
 
-- **Udacity** - LangGraph/LangChain course
 - **LangChain** - Framework and excellent documentation
 - **OpenAI** - GPT models for intelligent content generation
 - **Tavily** - Reliable medical information search
-- **Anthropic** - Claude for development assistance
 
 ---
 
